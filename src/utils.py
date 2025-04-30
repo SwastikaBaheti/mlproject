@@ -4,6 +4,7 @@ from src.exception import CustomException
 import numpy as np
 import pandas as pd
 import dill
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import r2_score
 
 def save_preprocessor_object(file_path, preprocessor_obj):
@@ -25,24 +26,28 @@ def get_preprocessor_object(file_path):
         except Exception as e:
             raise CustomException(e, sys)
 
-def evaluate_models(X_train, y_train, X_test, y_test, models):
+def evaluate_models(X_train, y_train, X_test, y_test, models, params):
      try:
         model_report = dict()
         for i in range(0, len(models)):
             model_name = list(models.keys())[i]
             model = list(models.values())[i]
+            model_param = params[model_name]
+
+            # Applying Hyperparameter tunning
+            random_cv = RandomizedSearchCV(estimator=model, param_distributions=model_param, cv=3, n_jobs=-1)
 
             # Model Training
-            model.fit(X_train, y_train)
+            random_cv.fit(X_train, y_train)
 
             # Model Prediction
-            y_pred_test = model.predict(X_test)
+            y_pred_test = random_cv.predict(X_test)
 
             # Model Evaluation
             score_test = get_model_accuracy(y_test, y_pred_test)
 
             # Storing the results
-            model_report[model_name] = score_test
+            model_report[model_name] = (score_test, random_cv.best_params_)
 
         return model_report
      except Exception as e:

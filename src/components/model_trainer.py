@@ -33,21 +33,46 @@ class ModelTrainer:
             models = {
                 "Linear Regressor": LinearRegression(),
                 "Decision Tree Regressor": DecisionTreeRegressor(),
-                "KNN Regressor": KNeighborsRegressor(),
                 "RandomForest Regressor": RandomForestRegressor(),
                 "Adaboost Regressor": AdaBoostRegressor(),
                 "GradientBoost Regressor": GradientBoostingRegressor(),
                 "XGBoost Regressor": XGBRegressor()
             }
 
+            params={
+                "Decision Tree Regressor": {
+                    'criterion':['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+                    'max_features':['sqrt','log2'],
+                },
+                "RandomForest Regressor":{
+                    'n_estimators': [8,16,32,64,128,256]
+                },
+                "GradientBoost Regressor":{
+                    'learning_rate':[.1,.01,.05,.001],
+                    'subsample':[0.6,0.7,0.75,0.8,0.85,0.9],
+                    'n_estimators': [8,16,32,64,128,256]
+                },
+                "Linear Regressor":{},
+                "XGBoost Regressor":{
+                    'learning_rate':[.1,.01,.05,.001],
+                    'n_estimators': [8,16,32,64,128,256]
+                },
+                "Adaboost Regressor":{
+                    'learning_rate':[.1,.01,0.5,.001],
+                    'n_estimators': [8,16,32,64,128,256]
+                }
+                
+            }
+
             logging.info('Evaluating the models')
-            model_report: dict = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models)
+            model_report: dict = evaluate_models(X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, models=models, params=params)
             logging.info('Model evaluation completed')
 
-            best_model_score = max(sorted(model_report.values()))
-            best_model_name = list(model_report.keys())[list(model_report.values()).index(best_model_score)]
-            best_model = models[best_model_name]
+            best_model_name = max(model_report, key=lambda k: model_report[k][0])
+            best_model_score, best_model_params = model_report[best_model_name]
 
+            best_model = models[best_model_name].__class__(**best_model_params)
+            
             if best_model_score < 0.6:
                 raise CustomException('No best model found')
             
@@ -56,6 +81,7 @@ class ModelTrainer:
             logging.info('Saving the regression model')
             save_model(file_path=self.model_trainer_config.trained_model_file_path, model=best_model)
 
+            best_model.fit(X_train, y_train)
             y_pred = best_model.predict(X_test)
             score = r2_score(y_test, y_pred)
  
