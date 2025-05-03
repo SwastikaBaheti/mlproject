@@ -69,3 +69,11 @@ def save_model(file_path, model):
 
         except Exception as e:
             raise CustomException(e, sys)
+        
+def get_model_object(file_path):
+        try:
+            with open(file_path, 'rb') as fp:
+                model_obj = dill.load(fp)
+            return model_obj
+        except Exception as e:
+            raise CustomException(e, sys)

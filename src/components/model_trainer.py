@@ -78,12 +78,12 @@ class ModelTrainer:
             
             logging.info('Found the model with maximum accuracy')
 
-            logging.info('Saving the regression model')
-            save_model(file_path=self.model_trainer_config.trained_model_file_path, model=best_model)
-
             best_model.fit(X_train, y_train)
             y_pred = best_model.predict(X_test)
             score = r2_score(y_test, y_pred)
+
+            logging.info('Saving the regression model')
+            save_model(file_path=self.model_trainer_config.trained_model_file_path, model=best_model)
  
             return(score)
         except Exception as e:
